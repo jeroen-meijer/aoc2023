@@ -1,14 +1,10 @@
-extern crate stopwatch;
-
 mod assignments;
-mod helpers;
 
-use stopwatch::Stopwatch;
-
-use assignments::{get_assignments, Answer};
+use assignments::{get_assignments, Answer, Assignment, TestCaseOutput};
+use owo_colors::OwoColorize;
 
 fn throw_invalid_assignment_number_error() -> ! {
-    println!("Invalid &assignment number.");
+    println!("Invalid assignment number.");
     println!(
         "Usage: src/main.rs <assignment_number[1 through {}]>",
         get_assignments().len()
@@ -23,117 +19,87 @@ fn main() {
         throw_invalid_assignment_number_error();
     }
 
-    let should_run_single_assignment = args.len() > 1;
-    if should_run_single_assignment {
-        let assignment_number = match args[1].parse::<i32>() {
-            Ok(n) => n,
-            Err(_) => throw_invalid_assignment_number_error(),
-        };
+    // Clear stdout
+    print!("\x1B[2J\x1B[1;1H");
 
-        _run_single_assignment(assignment_number);
+    let should_run_single_assignment = args.len() > 1;
+    if !should_run_single_assignment {
+        _run_assignments(None)
     } else {
-        _run_all_assignments();
+        match args[1].parse::<u32>() {
+            Ok(n) => _run_assignments(Some(n)),
+            Err(_) => throw_invalid_assignment_number_error(),
+        }
     }
 }
 
-fn _run_single_assignment(n: i32) {
+fn _run_assignments(assignment_number: Option<u32>) {
     let assignments = get_assignments();
 
-    let assignment = match assignments.get(n as usize - 1) {
-        Some(a) => a,
-        None => throw_invalid_assignment_number_error(),
-    };
-
-    println!(
-        "Running assignment Day {} Part {}: {}",
-        assignment.day, assignment.part, assignment.description
-    );
-
-    let did_succeed = match assignment.run() {
-        Err(e) => {
-            println!("Error while running assignment: {}", e);
-            false
-        }
-        Ok(Answer::None) => {
-            println!("No answer given.");
-            false
-        }
-        Ok(answer) => {
-            println!("Answer given: {}", answer.to_string());
-            match assignment.answer {
-                Answer::None => {
-                    println!("No real answer to compare to.");
-                    false
-                }
-                _ => {
-                    println!("Real answer: {}", assignment.answer.to_string());
-                    answer == assignment.answer
-                }
+    if let Some(n) = assignment_number {
+        let assignment = assignments.iter().find(|a| a.day == n);
+        match assignment {
+            Some(a) => _run_single_assignment(a),
+            None => {
+                let error_text = format!(
+                    "Assignment number {} does not exist. Please choose a valid assignment: {}",
+                    n,
+                    assignments
+                        .iter()
+                        .map(|a| a.day.to_string())
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                );
+                println!("{}", error_text.bright_red());
+                std::process::exit(1);
             }
         }
-    };
-
-    let has_real_answer = assignment.answer != Answer::None;
-
-    if did_succeed {
-        println!("✅ Correct!");
-    } else if has_real_answer {
-        println!("❌ Wrong.");
+    } else {
+        for assignment in assignments {
+            _run_single_assignment(&assignment);
+        }
     }
 }
 
-fn _run_all_assignments() {
-    for assignment in get_assignments() {
-        let title = format!(
-            "Day {}: {} (Part {})",
-            assignment.day, assignment.description, assignment.part
-        );
-        let result_icon: String;
-        let result_description: String;
+fn _run_single_assignment(assignment: &Assignment) {
+    println!(
+        "{}",
+        format!("Day {}: {}", assignment.day, assignment.description).bold()
+    );
 
-        let mut sw = Stopwatch::start_new();
-        let run_result = assignment.run();
-        sw.stop();
+    let outputs = assignment.run();
 
-        let runtime = format!("{}ms", sw.elapsed_ms());
+    fn _output_result(name: &str, output: &TestCaseOutput) {
+        const MAX_NAME_CHARS: u8 = 9;
+        let pad_length = MAX_NAME_CHARS - name.len() as u8;
 
-        match run_result {
-            Ok(Answer::None) => {
-                result_icon = "➖".to_string();
-                result_description = "No answer.".to_string();
+        print!("  - {}: {}", name, " ".repeat(pad_length as usize));
+        match output.get_result() {
+            assignments::TestCaseResult::NoAnswer => print!("{}", "❓ No answer.".yellow()),
+            assignments::TestCaseResult::Correct => print!("{}", "✅ Correct.".green()),
+            assignments::TestCaseResult::Incorrect => print!("{}", "❌ Incorrect.".bright_red()),
+            assignments::TestCaseResult::Error => print!("{}", "🚨 Error.".red().bold()),
+            assignments::TestCaseResult::Unknown => print!("{}", "🤷 Unknown.".bright_yellow()),
+        }
+
+        match &output.expected {
+            Some(e) => print!(" Expected {}.", e.to_string()),
+            _ => (),
+        }
+        match &output.actual {
+            Ok(a) if a != &Answer::None => {
+                print!(" Answered {}.", a.to_string())
             }
-            Err(e) => {
-                result_icon = "⚠️".to_string();
-                result_description = format!("Error: {}", e).to_string();
-            }
-            Ok(answer) => {
-                let full_answer_string = format!("Answer given: {}", answer.to_string());
-                match assignment.answer {
-                    Answer::None => {
-                        result_icon = "❓".to_string();
-                        result_description =
-                            format!("{}. No correct answer given.", full_answer_string);
-                    }
-                    real_answer => {
-                        if answer == real_answer {
-                            result_icon = "✅".to_string();
-                            result_description = full_answer_string;
-                        } else {
-                            result_icon = "❌".to_string();
-                            result_description = format!(
-                                "{}. Correct answer: {}",
-                                full_answer_string,
-                                real_answer.to_string()
-                            );
-                        }
-                    }
-                }
-            }
-        };
+            Err(e) => print!(" Error: {}.", e),
+            _ => (),
+        }
+        print!(" ({}ms)", output.runtime.as_millis());
 
-        println!(
-            "{} {} - [{}] {}",
-            result_icon, title, runtime, result_description
-        );
+        println!();
     }
+
+    _output_result("Example 1", &outputs.example_day_1);
+    _output_result("Day 1", &outputs.day1);
+    _output_result("Example 2", &outputs.example_day_2);
+    _output_result("Day 2", &outputs.day2);
 }
