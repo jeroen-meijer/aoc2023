@@ -16,33 +16,28 @@ pub fn get_assignments() -> Vec<Assignment> {
 
 #[derive(PartialEq, Clone)]
 pub enum Answer {
-    None,
-    Integer(u32),
+    Integer(u64),
     String(String),
 }
 
 impl ToString for Answer {
     fn to_string(&self) -> String {
         match self {
-            Answer::None => "None".to_string(),
             Answer::Integer(i) => i.to_string(),
             Answer::String(s) => format!("\"{s}\""),
         }
     }
 }
 
-impl From<u32> for Answer {
-    fn from(value: u32) -> Self {
+impl From<u64> for Answer {
+    fn from(value: u64) -> Self {
         Answer::Integer(value)
     }
 }
 
-impl From<Option<u32>> for Answer {
-    fn from(value: Option<u32>) -> Self {
-        match value {
-            Some(v) => v.into(),
-            None => Answer::None,
-        }
+impl From<u32> for Answer {
+    fn from(value: u32) -> Self {
+        Answer::Integer(value.into())
     }
 }
 
@@ -51,16 +46,7 @@ impl From<i32> for Answer {
         if value < 0 {
             panic!("Integer value has to be positive.");
         }
-        Answer::Integer(value as u32)
-    }
-}
-
-impl From<Option<i32>> for Answer {
-    fn from(value: Option<i32>) -> Self {
-        match value {
-            Some(v) => v.into(),
-            None => Answer::None,
-        }
+        Answer::Integer(value as u64)
     }
 }
 
@@ -70,33 +56,15 @@ impl From<String> for Answer {
     }
 }
 
-impl From<Option<String>> for Answer {
-    fn from(value: Option<String>) -> Self {
-        match value {
-            Some(v) => v.into(),
-            None => Answer::None,
-        }
-    }
-}
-
 impl From<&str> for Answer {
     fn from(value: &str) -> Self {
         value.to_owned().into()
     }
 }
 
-impl From<Option<&str>> for Answer {
-    fn from(value: Option<&str>) -> Self {
-        match value {
-            Some(v) => v.into(),
-            None => Answer::None,
-        }
-    }
-}
-
 impl From<usize> for Answer {
     fn from(value: usize) -> Self {
-        Answer::Integer(value as u32)
+        Answer::Integer(value as u64)
     }
 }
 
@@ -112,26 +80,10 @@ pub struct TestCase {
     pub expected: Option<Answer>,
 }
 
-impl TestCase {
-    pub fn from_string(input: &'static str, expected: Option<Answer>) -> TestCase {
-        return TestCase {
-            input: Some(input),
-            expected,
-        };
-    }
-
-    pub fn from_file(expected: Option<Answer>) -> TestCase {
-        return TestCase {
-            input: None,
-            expected,
-        };
-    }
-}
-
 pub struct TestCaseOutput {
     pub input: String,
     pub expected: Option<Answer>,
-    pub actual: Result<Answer, String>,
+    pub actual: Result<Option<Answer>, String>,
     pub runtime: Duration,
 }
 
@@ -139,10 +91,10 @@ impl TestCaseOutput {
     pub fn get_result(&self) -> TestCaseResult {
         match &self.actual {
             Ok(a) => match a {
-                Answer::None => TestCaseResult::NoAnswer,
-                _ => match &self.expected {
-                    Some(e) => {
-                        if a == e {
+                None => TestCaseResult::NoAnswer,
+                Some(answer_value) => match &self.expected {
+                    Some(expected_value) => {
+                        if answer_value == expected_value {
                             TestCaseResult::Correct
                         } else {
                             TestCaseResult::Incorrect
@@ -167,33 +119,74 @@ pub enum TestCaseResult {
 pub struct Assignment {
     pub day: u32,
     pub description: &'static str,
-    pub cases: TestCaseGroup<TestCase>,
+    pub cases: TestCaseGroup<Option<TestCase>>,
     _f: InternalAssignmentCallback,
 }
 
-type InternalAssignmentCallback = fn(data: &Vec<String>, is_day_2: bool) -> Result<Answer, String>;
+type InternalAssignmentCallback =
+    fn(data: &Vec<String>, is_day_2: bool) -> Result<Option<Answer>, String>;
+
+pub struct AssignmentOptions {
+    day: u32,
+    description: &'static str,
+    run: InternalAssignmentCallback,
+    example_input_day_1: Option<&'static str>,
+    answer_example_day_1: Option<Answer>,
+    example_input_day_2: Option<&'static str>,
+    answer_example_day_2: Option<Answer>,
+    answer_day_1: Option<Answer>,
+    answer_day_2: Option<Answer>,
+}
 
 impl Assignment {
-    pub fn new(
-        day: u32,
-        description: &'static str,
-        cases: TestCaseGroup<TestCase>,
-        run: InternalAssignmentCallback,
-    ) -> Assignment {
+    pub fn new(options: AssignmentOptions) -> Assignment {
         return Assignment {
-            day,
-            description,
-            cases,
-            _f: run,
+            day: options.day,
+            description: options.description,
+            cases: TestCaseGroup {
+                example_day_1: options.example_input_day_1.and(Some(TestCase {
+                    input: options.example_input_day_1,
+                    expected: options.answer_example_day_1,
+                })),
+                day1: Some(TestCase {
+                    input: None,
+                    expected: options.answer_day_1,
+                }),
+                example_day_2: options.example_input_day_2.and(Some(TestCase {
+                    input: options.example_input_day_2,
+                    expected: options.answer_example_day_2,
+                })),
+                day2: Some(TestCase {
+                    input: None,
+                    expected: options.answer_day_2,
+                }),
+            },
+            _f: options.run,
         };
     }
 
-    pub fn run(&self) -> TestCaseGroup<TestCaseOutput> {
+    pub fn run(&self) -> TestCaseGroup<Option<TestCaseOutput>> {
         TestCaseGroup {
-            example_day_1: self._run_test_case(&self.cases.example_day_1, false),
-            day1: self._run_test_case(&self.cases.day1, false),
-            example_day_2: self._run_test_case(&self.cases.example_day_2, true),
-            day2: self._run_test_case(&self.cases.day2, true),
+            example_day_1: self
+                .cases
+                .example_day_1
+                .as_ref()
+                .map(|case| self._run_test_case(case, false)),
+            day1: self
+                .cases
+                .day1
+                .as_ref()
+                .map(|case| self._run_test_case(case, false)),
+            example_day_2: self
+                .cases
+                .example_day_2
+                .as_ref()
+                .map(|case| self._run_test_case(case, true)),
+            day2: self
+                .cases
+                .day2
+                .as_ref()
+                .map(|case| self._run_test_case(case, true)),
         }
     }
 
@@ -230,12 +223,13 @@ Create this file and try again.",
         let actual = (self._f)(&lines, is_day_2);
         let runtime = stopwatch.elapsed();
         stopwatch.stop();
-        return TestCaseOutput {
+
+        TestCaseOutput {
             input: lines.join("\n"),
             expected,
             actual,
             runtime,
-        };
+        }
     }
 }
 

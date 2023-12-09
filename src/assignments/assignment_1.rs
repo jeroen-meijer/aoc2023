@@ -1,26 +1,23 @@
+use super::prelude::*;
+use regex::Regex;
 use std::ops::Range;
 
-use regex::Regex;
-
-use super::prelude::*;
-
 pub fn get_assignment() -> Assignment {
-    return Assignment::new(
-        1,
-        "Calorie Counting",
-        TestCaseGroup {
-            // cspell: disable
-            example_day_1: TestCase::from_string(
+    Assignment::new(
+        // cspell: disable
+        AssignmentOptions {
+            day: 1,
+            description: "Calorie Counting",
+            run: _run,
+            example_input_day_1: Some(
                 "
 1abc2
 pqr3stu8vwx
 a1b2c3d4e5f
-treb7uchet
-",
-                Some(142.into()),
+treb7uchet",
             ),
-            day1: TestCase::from_file(Some(54877.into())),
-            example_day_2: TestCase::from_string(
+            answer_example_day_1: Some(142.into()),
+            example_input_day_2: Some(
                 "
 two1nine
 eightwothree
@@ -29,16 +26,16 @@ xtwone3four
 4nineeightseven2
 zoneight234
 7pqrstsixteen",
-                Some(281.into()),
             ),
-            day2: TestCase::from_file(None),
-            // cspell: enable
+            answer_example_day_2: Some(281.into()),
+            answer_day_1: Some(54877.into()),
+            answer_day_2: None,
         },
-        _run,
-    );
+        // cspell: enable
+    )
 }
 
-fn _run(data: &Vec<String>, is_day_2: bool) -> Result<Answer, String> {
+fn _run(data: &Vec<String>, is_day_2: bool) -> Result<Option<Answer>, String> {
     const WORD_TO_DIGIT: [(&str, u8); 9] = [
         ("one", 1),
         ("two", 2),
@@ -51,7 +48,7 @@ fn _run(data: &Vec<String>, is_day_2: bool) -> Result<Answer, String> {
         ("nine", 9),
     ];
 
-    Ok(data
+    let res = data
         .iter()
         .map(|line| {
             let mut all_numbers = vec![];
@@ -61,7 +58,9 @@ fn _run(data: &Vec<String>, is_day_2: bool) -> Result<Answer, String> {
                 .enumerate()
                 .filter_map(|(index, c)| c.to_digit(10).map(|d| (index, d as u8)))
                 .collect::<Vec<_>>();
-            all_numbers.extend(numbers_by_index);
+            all_numbers.extend(numbers_by_index.clone());
+
+            let logging_enabled = is_day_2 && data.len() > 20;
 
             if is_day_2 {
                 let regex_matches_per_digit = WORD_TO_DIGIT.map(|(word, digit)| {
@@ -83,7 +82,7 @@ fn _run(data: &Vec<String>, is_day_2: bool) -> Result<Answer, String> {
                 let regex_matches_by_index = regex_matches_with_range
                     .iter()
                     .fold(Vec::<&(Range<usize>, u8)>::new(), |mut acc, cur| {
-                        if !acc.iter().any(|e| e.0.end >= cur.0.start) {
+                        if !acc.iter().any(|e| e.0.end > cur.0.start) {
                             acc.push(cur)
                         }
                         acc
@@ -92,10 +91,20 @@ fn _run(data: &Vec<String>, is_day_2: bool) -> Result<Answer, String> {
                     .map(|(range, digit)| (range.start, *digit))
                     .collect::<Vec<_>>();
 
-                all_numbers.extend(regex_matches_by_index);
+                all_numbers.extend(regex_matches_by_index.clone());
+
+                if logging_enabled {
+                    println!("\"{line}\"");
+                    println!("numbers_by_index:       {:?}", numbers_by_index);
+                    println!("regex_matches_per_digit: {:?}", regex_matches_per_digit);
+                    println!("regex_matches_by_index: {:?}", regex_matches_by_index);
+                }
             }
 
             all_numbers.sort_by_key(|(index, _)| *index);
+            if logging_enabled {
+                println!("all_numbers:            {:?}", all_numbers);
+            }
 
             if all_numbers.is_empty() {
                 return 0;
@@ -106,11 +115,17 @@ fn _run(data: &Vec<String>, is_day_2: bool) -> Result<Answer, String> {
                 all_numbers.first().unwrap().1,
                 all_numbers.last().unwrap().1
             )
-            .parse::<u32>()
+            .parse::<u64>()
             .unwrap();
+
+            if logging_enabled {
+                println!("res:                    {}", res);
+                println!("");
+            }
 
             res
         })
-        .sum::<u32>()
-        .into())
+        .sum::<u64>();
+
+    Ok(Some(res.into()))
 }

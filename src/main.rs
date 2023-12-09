@@ -1,6 +1,6 @@
 mod assignments;
 
-use assignments::{get_assignments, Answer, Assignment, TestCaseOutput};
+use assignments::{get_assignments, Assignment, TestCaseOutput};
 use owo_colors::OwoColorize;
 
 fn throw_invalid_assignment_number_error() -> ! {
@@ -69,11 +69,17 @@ fn _run_single_assignment(assignment: &Assignment) {
 
     let outputs = assignment.run();
 
-    fn _output_result(name: &str, output: &TestCaseOutput) {
+    fn _output_result(name: &str, output: Option<&TestCaseOutput>) {
         const MAX_NAME_CHARS: u8 = 9;
         let pad_length = MAX_NAME_CHARS - name.len() as u8;
 
         print!("  - {}: {}", name, " ".repeat(pad_length as usize));
+
+        let Some(output) = output else {
+            println!("{}", "➖ No input.".black());
+            return;
+        };
+
         match output.get_result() {
             assignments::TestCaseResult::NoAnswer => print!("{}", "❓ No answer.".yellow()),
             assignments::TestCaseResult::Correct => print!("{}", "✅ Correct.".green()),
@@ -87,8 +93,8 @@ fn _run_single_assignment(assignment: &Assignment) {
             _ => (),
         }
         match &output.actual {
-            Ok(a) if a != &Answer::None => {
-                print!(" Answered {}.", a.to_string())
+            Ok(Some(answer_value)) => {
+                print!(" Answered {}.", answer_value.to_string())
             }
             Err(e) => print!(" Error: {}.", e),
             _ => (),
@@ -98,8 +104,8 @@ fn _run_single_assignment(assignment: &Assignment) {
         println!();
     }
 
-    _output_result("Example 1", &outputs.example_day_1);
-    _output_result("Day 1", &outputs.day1);
-    _output_result("Example 2", &outputs.example_day_2);
-    _output_result("Day 2", &outputs.day2);
+    _output_result("Example 1", outputs.example_day_1.as_ref());
+    _output_result("Day 1", outputs.day1.as_ref());
+    _output_result("Example 2", outputs.example_day_2.as_ref());
+    _output_result("Day 2", outputs.day2.as_ref());
 }
