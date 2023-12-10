@@ -1,4 +1,5 @@
 mod assignment_1;
+mod assignment_2;
 
 use core::panic;
 use std::fs::File;
@@ -11,7 +12,10 @@ pub use prelude::*;
 use stopwatch::Stopwatch;
 
 pub fn get_assignments() -> Vec<Assignment> {
-    return vec![assignment_1::get_assignment()];
+    return vec![
+        assignment_1::get_assignment(),
+        assignment_2::get_assignment(),
+    ];
 }
 
 #[derive(PartialEq, Clone)]
@@ -132,10 +136,10 @@ pub struct AssignmentOptions {
     run: InternalAssignmentCallback,
     example_input_day_1: Option<&'static str>,
     answer_example_day_1: Option<Answer>,
+    answer_day_2: Option<Answer>,
     example_input_day_2: Option<&'static str>,
     answer_example_day_2: Option<Answer>,
     answer_day_1: Option<Answer>,
-    answer_day_2: Option<Answer>,
 }
 
 impl Assignment {

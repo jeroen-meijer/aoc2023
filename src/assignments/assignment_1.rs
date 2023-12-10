@@ -2,6 +2,8 @@ use super::prelude::*;
 use regex::Regex;
 use std::ops::Range;
 
+const LOGGING_ENABLED: bool = false;
+
 pub fn get_assignment() -> Assignment {
     Assignment::new(
         // cspell: disable
@@ -60,8 +62,6 @@ fn _run(data: &Vec<String>, is_day_2: bool) -> Result<Option<Answer>, String> {
                 .collect::<Vec<_>>();
             all_numbers.extend(numbers_by_index.clone());
 
-            let logging_enabled = is_day_2 && data.len() > 20;
-
             if is_day_2 {
                 let regex_matches_per_digit = WORD_TO_DIGIT.map(|(word, digit)| {
                     let pattern = Regex::new(word).unwrap();
@@ -93,7 +93,7 @@ fn _run(data: &Vec<String>, is_day_2: bool) -> Result<Option<Answer>, String> {
 
                 all_numbers.extend(regex_matches_by_index.clone());
 
-                if logging_enabled {
+                if LOGGING_ENABLED {
                     println!("\"{line}\"");
                     println!("numbers_by_index:       {:?}", numbers_by_index);
                     println!("regex_matches_per_digit: {:?}", regex_matches_per_digit);
@@ -102,7 +102,7 @@ fn _run(data: &Vec<String>, is_day_2: bool) -> Result<Option<Answer>, String> {
             }
 
             all_numbers.sort_by_key(|(index, _)| *index);
-            if logging_enabled {
+            if LOGGING_ENABLED {
                 println!("all_numbers:            {:?}", all_numbers);
             }
 
@@ -118,7 +118,7 @@ fn _run(data: &Vec<String>, is_day_2: bool) -> Result<Option<Answer>, String> {
             .parse::<u64>()
             .unwrap();
 
-            if logging_enabled {
+            if LOGGING_ENABLED {
                 println!("res:                    {}", res);
                 println!("");
             }
