@@ -1,21 +1,43 @@
 mod assignment_1;
 mod assignment_2;
+mod assignment_3;
+mod prelude;
 
 use core::panic;
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
 use std::time::Duration;
-
-mod prelude;
-pub use prelude::*;
 use stopwatch::Stopwatch;
 
 pub fn get_assignments() -> Vec<Assignment> {
-    return vec![
+    let assignments = vec![
         assignment_1::get_assignment(),
         assignment_2::get_assignment(),
+        assignment_3::get_assignment(),
     ];
+    let assignments_by_day =
+        assignments
+            .iter()
+            .fold(HashMap::<u32, Vec<&Assignment>>::new(), |mut acc, cur| {
+                acc.entry(cur.day).or_default().push(cur);
+                acc
+            });
+    for (day, assignments) in assignments_by_day {
+        if assignments.len() > 1 {
+            let assignment_names = assignments
+                .iter()
+                .map(|a| a.description)
+                .collect::<Vec<_>>();
+            panic!(
+                "Found duplicate assignment day number {} for assignments: {:?}",
+                day, assignment_names
+            );
+        }
+    }
+
+    assignments
 }
 
 #[derive(PartialEq, Clone)]

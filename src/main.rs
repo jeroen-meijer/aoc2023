@@ -6,8 +6,12 @@ use owo_colors::OwoColorize;
 fn throw_invalid_assignment_number_error() -> ! {
     println!("Invalid assignment number.");
     println!(
-        "Usage: src/main.rs <assignment_number[1 through {}]>",
-        get_assignments().len()
+        "Usage: src/main.rs <assignment_number[{}]>",
+        get_assignments()
+            .iter()
+            .map(|a| a.day.to_string())
+            .collect::<Vec<_>>()
+            .join(", ")
     );
     std::process::exit(1);
 }
@@ -18,9 +22,6 @@ fn main() {
     if args.len() > 2 {
         throw_invalid_assignment_number_error();
     }
-
-    // Clear stdout
-    print!("\x1B[2J\x1B[1;1H");
 
     let should_run_single_assignment = args.len() > 1;
     if !should_run_single_assignment {
