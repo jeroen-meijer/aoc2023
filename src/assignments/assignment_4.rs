@@ -83,16 +83,14 @@ fn _run_part_2(cards: Vec<Card>) -> Result<Option<Answer>, String> {
     keys.sort();
 
     for id in keys {
-        let (card, copies) = cards_and_amounts_by_id.get_mut(&id).unwrap();
+        let (card, copies) = cards_and_amounts_by_id.get(&id).unwrap().clone();
         let hits = card.get_overlapping_numbers().len();
-        for _ in 0..*copies {
-            for i in 0..hits {
-                let id_to_add_copy_to = id + 1 + i as u32;
-                let entry = cards_and_amounts_by_id.get_mut(&id_to_add_copy_to);
-                match entry {
-                    Some(entry) => entry.1 += 1,
-                    None => {}
-                }
+        for i in 0..hits {
+            let id_to_add_copy_to = id + 1 + i as u32;
+            let entry = cards_and_amounts_by_id.get_mut(&id_to_add_copy_to);
+            match entry {
+                Some(entry) => entry.1 += copies,
+                None => {}
             }
         }
     }
