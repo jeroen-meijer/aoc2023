@@ -108,6 +108,8 @@ pub struct TestCaseGroup<T> {
 pub struct TestCase {
     pub input: Option<&'static str>,
     pub expected: Option<Answer>,
+    pub part_number: u8,
+    pub is_example: bool,
 }
 
 pub struct TestCaseOutput {
@@ -154,7 +156,7 @@ pub struct Assignment {
 }
 
 type InternalAssignmentCallback =
-    fn(data: &Vec<String>, is_day_2: bool) -> Result<Option<Answer>, String>;
+    fn(context: AssignmentRuntimeContext) -> Result<Option<Answer>, String>;
 
 pub struct AssignmentOptions {
     day: u32,
@@ -168,6 +170,12 @@ pub struct AssignmentOptions {
     answer_day_1: Option<Answer>,
 }
 
+pub struct AssignmentRuntimeContext<'a> {
+    pub data: &'a Vec<String>,
+    pub part_number: u8,
+    pub is_example: bool,
+}
+
 impl Assignment {
     pub fn new(options: AssignmentOptions) -> Assignment {
         return Assignment {
@@ -177,18 +185,26 @@ impl Assignment {
                 example_day_1: options.example_input_day_1.and(Some(TestCase {
                     input: options.example_input_day_1,
                     expected: options.answer_example_day_1,
+                    part_number: 1,
+                    is_example: true,
                 })),
                 day1: Some(TestCase {
                     input: None,
                     expected: options.answer_day_1,
+                    part_number: 1,
+                    is_example: false,
                 }),
                 example_day_2: options.example_input_day_2.and(Some(TestCase {
                     input: options.example_input_day_2,
                     expected: options.answer_example_day_2,
+                    part_number: 2,
+                    is_example: true,
                 })),
                 day2: Some(TestCase {
                     input: None,
                     expected: options.answer_day_2,
+                    part_number: 2,
+                    is_example: false,
                 }),
             },
             _f: options.run,
@@ -201,26 +217,26 @@ impl Assignment {
                 .cases
                 .example_day_1
                 .as_ref()
-                .map(|case| self._run_test_case(case, false)),
+                .map(|case| self._run_test_case(case)),
             day1: self
                 .cases
                 .day1
                 .as_ref()
-                .map(|case| self._run_test_case(case, false)),
+                .map(|case| self._run_test_case(case)),
             example_day_2: self
                 .cases
                 .example_day_2
                 .as_ref()
-                .map(|case| self._run_test_case(case, true)),
+                .map(|case| self._run_test_case(case)),
             day2: self
                 .cases
                 .day2
                 .as_ref()
-                .map(|case| self._run_test_case(case, true)),
+                .map(|case| self._run_test_case(case)),
         }
     }
 
-    fn _run_test_case(&self, test_case: &TestCase, is_day_2: bool) -> TestCaseOutput {
+    fn _run_test_case(&self, test_case: &TestCase) -> TestCaseOutput {
         let lines = match test_case.input {
             Some(i) => i.lines().map(|s| s.to_string()).collect::<Vec<_>>(),
             None => {
@@ -250,7 +266,11 @@ Create this file and try again.",
         let expected = test_case.expected.clone();
 
         let mut stopwatch = Stopwatch::start_new();
-        let actual = (self._f)(&lines, is_day_2);
+        let actual = (self._f)(AssignmentRuntimeContext {
+            data: &lines,
+            part_number: test_case.part_number,
+            is_example: test_case.is_example,
+        });
         let runtime = stopwatch.elapsed();
         stopwatch.stop();
 

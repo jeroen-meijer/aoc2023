@@ -30,27 +30,32 @@ Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11",
     )
 }
 
-fn _run(data: &Vec<String>, is_day_2: bool) -> Result<Option<Answer>, String> {
-    let cards = data
+fn _run(context: AssignmentRuntimeContext) -> Result<Option<Answer>, String> {
+    let cards = context
+        .data
         .into_iter()
         .map(|line| Card::parse(line))
         .collect::<Vec<_>>();
 
-    let scores_by_card =
-        cards
-            .iter()
-            .map(|card| card.get_overlapping_numbers())
-            .map(|overlapping_numbers| {
-                if overlapping_numbers.is_empty() {
-                    0
-                } else {
-                    2u64.pow(overlapping_numbers.len() as u32 - 1)
-                }
-            });
+    if context.part_number == 1 {
+        let scores_by_card =
+            cards
+                .iter()
+                .map(|card| card.get_overlapping_numbers())
+                .map(|overlapping_numbers| {
+                    if overlapping_numbers.is_empty() {
+                        0
+                    } else {
+                        2u64.pow(overlapping_numbers.len() as u32 - 1)
+                    }
+                });
 
-    let sum = scores_by_card.sum::<u64>();
+        let sum = scores_by_card.sum::<u64>();
 
-    Ok(Some(sum.into()))
+        Ok(Some(sum.into()))
+    } else {
+        Ok(None)
+    }
 }
 
 struct Card {

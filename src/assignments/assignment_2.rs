@@ -35,13 +35,14 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green",
     )
 }
 
-fn _run(data: &Vec<String>, _is_day_2: bool) -> Result<Option<Answer>, String> {
-    let games = data
+fn _run(context: AssignmentRuntimeContext) -> Result<Option<Answer>, String> {
+    let games = context
+        .data
         .iter()
         .map(|line| Game::parse(&line))
         .collect::<Vec<_>>();
 
-    if !_is_day_2 {
+    if context.part_number == 1 {
         _run_day_1(games)
     } else {
         _run_day_2(games)

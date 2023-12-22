@@ -37,7 +37,7 @@ zoneight234
     )
 }
 
-fn _run(data: &Vec<String>, is_day_2: bool) -> Result<Option<Answer>, String> {
+fn _run(context: AssignmentRuntimeContext) -> Result<Option<Answer>, String> {
     const WORD_TO_DIGIT: [(&str, u8); 9] = [
         ("one", 1),
         ("two", 2),
@@ -50,7 +50,8 @@ fn _run(data: &Vec<String>, is_day_2: bool) -> Result<Option<Answer>, String> {
         ("nine", 9),
     ];
 
-    let res = data
+    let res = context
+        .data
         .iter()
         .map(|line| {
             let mut all_numbers = vec![];
@@ -62,7 +63,7 @@ fn _run(data: &Vec<String>, is_day_2: bool) -> Result<Option<Answer>, String> {
                 .collect::<Vec<_>>();
             all_numbers.extend(numbers_by_index.clone());
 
-            if is_day_2 {
+            if context.part_number == 1 {
                 let regex_matches_per_digit = WORD_TO_DIGIT.map(|(word, digit)| {
                     let pattern = Regex::new(word).unwrap();
                     pattern

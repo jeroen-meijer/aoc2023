@@ -46,10 +46,10 @@ pub fn get_assignment() -> Assignment {
     )
 }
 
-fn _run(data: &Vec<String>, is_day_2: bool) -> Result<Option<Answer>, String> {
-    let matrix = EngineMatrix::parse(data);
+fn _run(context: AssignmentRuntimeContext) -> Result<Option<Answer>, String> {
+    let matrix = EngineMatrix::parse(context.data);
 
-    if !is_day_2 {
+    if context.part_number == 1 {
         let numbers_surrounded_by_symbols = matrix
             .symbols
             .iter()
