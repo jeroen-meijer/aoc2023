@@ -1,21 +1,25 @@
-mod assignment_1;
-mod assignment_2;
-mod assignment_3;
-mod prelude;
-
 use core::panic;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
 use std::time::Duration;
+
 use stopwatch::Stopwatch;
+
+mod assignment_1;
+mod assignment_2;
+mod assignment_3;
+mod assignment_4;
+
+mod prelude;
 
 pub fn get_assignments() -> Vec<Assignment> {
     let assignments = vec![
         assignment_1::get_assignment(),
         assignment_2::get_assignment(),
         assignment_3::get_assignment(),
+        assignment_4::get_assignment(),
     ];
     let assignments_by_day =
         assignments
