@@ -43,13 +43,13 @@ fn _run(context: AssignmentRuntimeContext) -> Result<Option<Answer>, String> {
         .collect::<Vec<_>>();
 
     if context.part_number == 1 {
-        _run_day_1(games)
+        _run_part_1(games)
     } else {
-        _run_day_2(games)
+        _run_part_2(games)
     }
 }
 
-fn _run_day_1(games: Vec<Game>) -> Result<Option<Answer>, String> {
+fn _run_part_1(games: Vec<Game>) -> Result<Option<Answer>, String> {
     let limits = CubeLimits {
         red: 12,
         green: 13,
@@ -91,7 +91,7 @@ fn _run_day_1(games: Vec<Game>) -> Result<Option<Answer>, String> {
     Ok(Some(possible_game_ids_sum.into()))
 }
 
-fn _run_day_2(games: Vec<Game>) -> Result<Option<Answer>, String> {
+fn _run_part_2(games: Vec<Game>) -> Result<Option<Answer>, String> {
     let games_with_minimal_pulls = games.iter().map(|game| {
         (
             game,

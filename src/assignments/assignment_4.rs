@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use itertools::Itertools;
 
@@ -21,10 +21,18 @@ Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36
 Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11",
             ),
             answer_example_day_1: Some(13.into()),
-            answer_day_1: None,
-            example_input_day_2: None,
-            answer_example_day_2: None,
-            answer_day_2: None,
+            answer_day_1: Some(20107.into()),
+            example_input_day_2: Some(
+                "
+Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53
+Card 2: 13 32 20 16 61 | 61 30 68 82 17 32 24 19
+Card 3:  1 21 53 59 44 | 69 82 63 72 16 21 14  1
+Card 4: 41 92 73 84 69 | 59 84 76 51 58  5 54 83
+Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36
+Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11",
+            ),
+            answer_example_day_2: Some(30.into()),
+            answer_day_2: Some(8172507.into()),
         },
         // cspell: enable
     )
@@ -38,24 +46,63 @@ fn _run(context: AssignmentRuntimeContext) -> Result<Option<Answer>, String> {
         .collect::<Vec<_>>();
 
     if context.part_number == 1 {
-        let scores_by_card =
-            cards
-                .iter()
-                .map(|card| card.get_overlapping_numbers())
-                .map(|overlapping_numbers| {
-                    if overlapping_numbers.is_empty() {
-                        0
-                    } else {
-                        2u64.pow(overlapping_numbers.len() as u32 - 1)
-                    }
-                });
-
-        let sum = scores_by_card.sum::<u64>();
-
-        Ok(Some(sum.into()))
+        _run_part_1(cards)
     } else {
-        Ok(None)
+        _run_part_2(cards)
     }
+}
+
+fn _run_part_1(cards: Vec<Card>) -> Result<Option<Answer>, String> {
+    let scores_by_card =
+        cards
+            .iter()
+            .map(|card| card.get_overlapping_numbers())
+            .map(|overlapping_numbers| {
+                if overlapping_numbers.is_empty() {
+                    0
+                } else {
+                    2u64.pow(overlapping_numbers.len() as u32 - 1)
+                }
+            });
+
+    let sum = scores_by_card.sum::<u64>();
+
+    Ok(Some(sum.into()))
+}
+
+fn _run_part_2(cards: Vec<Card>) -> Result<Option<Answer>, String> {
+    let mut cards_and_amounts_by_id = cards
+        .iter()
+        .map(|card| (card.id, (card, 1)))
+        .collect::<HashMap<_, _>>();
+
+    let mut keys = cards_and_amounts_by_id
+        .iter()
+        .map(|(key, _)| key.clone())
+        .collect::<Vec<_>>();
+    keys.sort();
+
+    for id in keys {
+        let (card, copies) = cards_and_amounts_by_id.get_mut(&id).unwrap();
+        let hits = card.get_overlapping_numbers().len();
+        for _ in 0..*copies {
+            for i in 0..hits {
+                let id_to_add_copy_to = id + 1 + i as u32;
+                let entry = cards_and_amounts_by_id.get_mut(&id_to_add_copy_to);
+                match entry {
+                    Some(entry) => entry.1 += 1,
+                    None => {}
+                }
+            }
+        }
+    }
+
+    let total_cards = cards_and_amounts_by_id
+        .into_iter()
+        .map(|(_, (_, copies))| copies)
+        .sum::<u64>();
+
+    Ok(Some(total_cards.into()))
 }
 
 struct Card {
