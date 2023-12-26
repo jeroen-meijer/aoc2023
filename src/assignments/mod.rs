@@ -11,6 +11,7 @@ mod assignment_1;
 mod assignment_2;
 mod assignment_3;
 mod assignment_4;
+mod assignment_5;
 
 mod prelude;
 
@@ -20,7 +21,9 @@ pub fn get_assignments() -> Vec<Assignment> {
         assignment_2::get_assignment(),
         assignment_3::get_assignment(),
         assignment_4::get_assignment(),
+        assignment_5::get_assignment(),
     ];
+
     let assignments_by_day =
         assignments
             .iter()
