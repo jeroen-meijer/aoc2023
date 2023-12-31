@@ -12,6 +12,7 @@ mod assignment_2;
 mod assignment_3;
 mod assignment_4;
 mod assignment_5;
+mod assignment_6;
 
 mod prelude;
 
@@ -22,6 +23,7 @@ pub fn get_assignments() -> Vec<Assignment> {
         assignment_3::get_assignment(),
         assignment_4::get_assignment(),
         assignment_5::get_assignment(),
+        assignment_6::get_assignment(),
     ];
 
     let assignments_by_day =
@@ -177,6 +179,7 @@ pub struct AssignmentRuntimeContext<'a> {
     pub data: &'a Vec<String>,
     pub part_number: u8,
     pub is_example: bool,
+    pub logging_enabled: bool,
 }
 
 impl Assignment {
@@ -273,6 +276,7 @@ Create this file and try again.",
             data: &lines,
             part_number: test_case.part_number,
             is_example: test_case.is_example,
+            logging_enabled: false,
         });
         let runtime = stopwatch.elapsed();
         stopwatch.stop();

@@ -2,8 +2,6 @@ use super::prelude::*;
 use regex::Regex;
 use std::ops::Range;
 
-const LOGGING_ENABLED: bool = false;
-
 pub fn get_assignment() -> Assignment {
     Assignment::new(
         // cspell: disable
@@ -94,7 +92,7 @@ fn _run(context: AssignmentRuntimeContext) -> Result<Option<Answer>, String> {
 
                 all_numbers.extend(regex_matches_by_index.clone());
 
-                if LOGGING_ENABLED {
+                if context.logging_enabled {
                     println!("\"{line}\"");
                     println!("numbers_by_index:       {:?}", numbers_by_index);
                     println!("regex_matches_per_digit: {:?}", regex_matches_per_digit);
@@ -103,7 +101,7 @@ fn _run(context: AssignmentRuntimeContext) -> Result<Option<Answer>, String> {
             }
 
             all_numbers.sort_by_key(|(index, _)| *index);
-            if LOGGING_ENABLED {
+            if context.logging_enabled {
                 println!("all_numbers:            {:?}", all_numbers);
             }
 
@@ -119,7 +117,7 @@ fn _run(context: AssignmentRuntimeContext) -> Result<Option<Answer>, String> {
             .parse::<u64>()
             .unwrap();
 
-            if LOGGING_ENABLED {
+            if context.logging_enabled {
                 println!("res:                    {}", res);
                 println!("");
             }

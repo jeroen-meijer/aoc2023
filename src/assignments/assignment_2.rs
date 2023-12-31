@@ -1,8 +1,6 @@
 use super::prelude::*;
 use std::collections::HashMap;
 
-const LOGGING_ENABLED: bool = false;
-
 pub fn get_assignment() -> Assignment {
     Assignment::new(
         // cspell: disable
@@ -43,20 +41,23 @@ fn _run(context: AssignmentRuntimeContext) -> Result<Option<Answer>, String> {
         .collect::<Vec<_>>();
 
     if context.part_number == 1 {
-        _run_part_1(games)
+        _run_part_1(context, games)
     } else {
-        _run_part_2(games)
+        _run_part_2(context, games)
     }
 }
 
-fn _run_part_1(games: Vec<Game>) -> Result<Option<Answer>, String> {
+fn _run_part_1(
+    context: AssignmentRuntimeContext,
+    games: Vec<Game>,
+) -> Result<Option<Answer>, String> {
     let limits = CubeLimits {
         red: 12,
         green: 13,
         blue: 14,
     };
 
-    if LOGGING_ENABLED {
+    if context.logging_enabled {
         for game in &games {
             print!("Game {}: ", game.id);
             for pull in &game.pulls {
@@ -91,7 +92,10 @@ fn _run_part_1(games: Vec<Game>) -> Result<Option<Answer>, String> {
     Ok(Some(possible_game_ids_sum.into()))
 }
 
-fn _run_part_2(games: Vec<Game>) -> Result<Option<Answer>, String> {
+fn _run_part_2(
+    _context: AssignmentRuntimeContext,
+    games: Vec<Game>,
+) -> Result<Option<Answer>, String> {
     let games_with_minimal_pulls = games.iter().map(|game| {
         (
             game,
